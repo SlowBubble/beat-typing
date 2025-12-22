@@ -53,20 +53,6 @@ function runGame() {
   let isReplaying = false;
   let replayFinished = false;
 
-  // Get drumMap for beat typing - different drum sounds for each number
-  const chordMap = {
-    '1': [81], // Open Triangle
-    '2': [42], // Closed Hi Hat
-    '3': [36], // Bass Drum 1
-    '4': [37], // Side Stick
-    '5': [54], // Tambourine
-    '6': [44], // Pedal Hi-Hat
-    '7': [41], // Low Floor Tom
-    '8': [38], // Acoustic Snare
-    '9': [56], // Cowbell
-    '0': [46], // Open Hi-Hat
-  };
-
   function flattenChords(song, sectionIdx) {
     // Returns array of {row, col, chord} for the current section
     const arr = [];
@@ -128,7 +114,36 @@ function runGame() {
     const utter2 = new window.SpeechSynthesisUtterance('Can you play it?');
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utter2);
-    window.addEventListener('keydown', handleChordKey);
+    window.addEventListener('keydown', handleAnyKey);
+  }
+
+  function handleAnyKey(e) {
+    // Start melody replay when any key is pressed (after song demonstration)
+    if (gameOver) return;
+    if (isReplaying) return;
+    
+    // Ignore modifier keys and special keys
+    if (e.key.length > 1 && !['Space', 'Enter'].includes(e.key)) return;
+    
+    isReplaying = true;
+    window.removeEventListener('keydown', handleAnyKey);
+    
+    // Replay melody only (no chords)
+    const song = songs[songIdx];
+    const melodyOnly = Object.assign({}, song);
+    delete melodyOnly.chords;
+    
+    replay(melodyOnly, {
+      doReMiMode: doReMiMode,
+      noteSpeedRatio: noteSpeedRatio,
+      onProgress: idx => {
+        keyIdx = idx + 1;
+        render();
+      }
+    }).then(() => {
+      nextSectionOrSong();
+      isReplaying = false;
+    });
   }
 
   // Add navigation buttons and challenge/DoReMi checkboxes
@@ -487,47 +502,7 @@ function runGame() {
     keyIdx = 0;
     flatChords = flattenChords(songs[songIdx], sectionIdx);
     render();
-    window.addEventListener('keydown', handleChordKey);
-  }
-
-  let pressedKeys = {};
-  let isUttering = false;
-
-  function handleChordKey(e) {
-    if (gameOver) return;
-    if (isReplaying) return;
-    if (pressedKeys[e.code]) return;
-    pressedKeys[e.code] = true;
-    
-    // Check if the key pressed is a number 0-9 for drum beats
-    if (chordMap[e.key]) {
-      // Play the specific drum sound for this number
-      const drumNote = chordMap[e.key][0];
-      MIDI.noteOn(DRUM_CHANNEL, drumNote, 135);
-      setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, drumNote), 200);
-      
-      isReplaying = true;
-      window.removeEventListener('keydown', handleChordKey);
-      // Replay melody only (no chords)
-      const song = songs[songIdx];
-      const melodyOnly = Object.assign({}, song);
-      delete melodyOnly.chords;
-      replay(melodyOnly, {
-        doReMiMode: doReMiMode,
-        noteSpeedRatio: noteSpeedRatio,
-        onProgress: idx => {
-          keyIdx = idx + 1;
-          render();
-        }
-      }).then(() => {
-        nextSectionOrSong();
-        isReplaying = false;
-      });
-    }
-  }
-
-  function handleKeyUp(e) {
-    pressedKeys[e.code] = false;
+    window.addEventListener('keydown', handleAnyKey);
   }
 
   function handleSpace(e) {
@@ -543,7 +518,6 @@ function runGame() {
   waitingForSpace = true;
   render();
   window.addEventListener('keydown', handleSpace);
-  window.addEventListener('keyup', handleKeyUp);
 }
 
 // Read config from URL hash

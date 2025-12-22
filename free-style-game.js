@@ -1,6 +1,7 @@
 
 // Track which chord is currently pressed
 let pressedChordKey = null;
+let activeDrumNotes = {}; // Track active drum notes by key
 
 function playChord(notes) {
 	notes.forEach(noteNumber => {
@@ -24,10 +25,18 @@ function releaseChord(notes) {
 	});
 }
 
-function playDrumBeat(noteNumber) {
+function playDrumBeat(noteNumber, key) {
 	// Play drum beat on drum channel (50% louder than piano)
 	MIDI.noteOn(DRUM_CHANNEL, noteNumber, 135);
-	setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, noteNumber), 200);
+	// Track this drum note by key
+	activeDrumNotes[key] = noteNumber;
+}
+
+function stopDrumBeat(key) {
+	if (activeDrumNotes[key]) {
+		MIDI.noteOff(DRUM_CHANNEL, activeDrumNotes[key]);
+		delete activeDrumNotes[key];
+	}
 }
 
 window.addEventListener('keydown', function(e) {
@@ -41,7 +50,7 @@ window.addEventListener('keydown', function(e) {
 		// Check if it's a number 0-9 (drum beat)
 		if (key >= '0' && key <= '9') {
 			const drumNote = chordMap[key][0];
-			playDrumBeat(drumNote);
+			playDrumBeat(drumNote, key);
 		} else {
 			// Play chord for other keys
 			if (pressedChordKey !== key) {
@@ -56,9 +65,16 @@ window.addEventListener('keydown', function(e) {
 
 window.addEventListener('keyup', function(e) {
 	const key = e.key;
-	// Only release chords for non-number keys (numbers are drum beats that auto-release)
-	if (chordMap[key] && pressedChordKey === key && !(key >= '0' && key <= '9')) {
-		releaseChord(chordMap[key]);
-		pressedChordKey = null;
+	if (chordMap[key]) {
+		// Check if it's a number 0-9 (drum beat)
+		if (key >= '0' && key <= '9') {
+			stopDrumBeat(key);
+		} else {
+			// Release chords for non-number keys
+			if (pressedChordKey === key) {
+				releaseChord(chordMap[key]);
+				pressedChordKey = null;
+			}
+		}
 	}
 });

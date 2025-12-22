@@ -30,3 +30,7 @@
   - 8: Acoustic Snare
   - 9: High Floor Tom
   - 0: Open Hi-Hat
+
+# m1d
+
+- The drum is played correctly when keydown, but it stop soon after even though I have holding the key. Can you trigger stop only when keyup happens.

@@ -63,11 +63,36 @@ Given an item from songs, play each note
   */
  function replay(song, opts = {}) {
   const noteDurMs = (song.noteDurMs || 800) / (opts.noteSpeedRatio || 1.0);
-  const doReMiMode = opts.doReMiMode || false;
   const speechEnabled = opts.speechEnabled !== false; // Default to true
   const onProgress = opts.onProgress;
+  
+  // Configurable delimiters for speech - can be customized
+  const delimiters = ['n']; // Previously was [] (no delimiters), now ['n'] for "1 n 2 n 3 n"
 
-  // Helper to flatten a section array into a sequence of notes (including '_')
+  // Helper to flatten a section array into a sequence of notes with row information
+  function flattenSectionsWithRows(sections) {
+    const notes = [];
+    let keySections = Array.isArray(sections[0]) ? sections : [sections];
+    keySections.forEach(section => {
+      section.forEach((row, rowIndex) => {
+        const rowNotes = row.split(' ').filter(k => k !== '');
+        rowNotes.forEach((k, colIndex) => {
+          notes.push({
+            note: k,
+            rowIndex: rowIndex,
+            colIndex: colIndex + 1 // 1-based position within row
+          });
+        });
+      });
+    });
+    return notes;
+  }
+
+
+  // Get main melody notes with row information
+  const notesWithRows = flattenSectionsWithRows(song.keys);
+
+  // Get chords (if any) - keep original flattening for chords
   function flattenSections(sections) {
     const notes = [];
     let keySections = Array.isArray(sections[0]) ? sections : [sections];
@@ -80,16 +105,11 @@ Given an item from songs, play each note
     });
     return notes;
   }
-
-
-  // Get main melody notes
-  const notes = flattenSections(song.keys);
-
-  // Get chords (if any)
+  
   const chords = song.chords ? flattenSections(song.chords) : null;
 
   // Determine the max length for playback
-  const maxLen = Math.max(notes.length, chords ? chords.length : 0);
+  const maxLen = Math.max(notesWithRows.length, chords ? chords.length : 0);
 
 
   return new Promise(resolve => {
@@ -111,7 +131,8 @@ Given an item from songs, play each note
         return;
       }
       // Main melody
-      const noteChar = notes[idx] || '_';
+      const noteInfo = notesWithRows[idx] || { note: '_', rowIndex: -1, colIndex: 1 };
+      const noteChar = noteInfo.note;
       let dur = noteDurMs;
       if (song.swing && idx % 2 === 1) {
         dur = noteDurMs * song.swing;
@@ -124,10 +145,30 @@ Given an item from songs, play each note
         let noteNumber = charToNoteNum[noteChar];
         if (typeof noteNumber !== "undefined") {
           noteNumber += 12; // Play one octave higher than mapping
-          // Utter the character at the same time (only if speech is enabled)
+          // Utter the position within the current row (only if speech is enabled)
           if (speechEnabled && typeof window.speechSynthesis !== "undefined") {
-            const speakKey = doReMiMode ? simplifyCharToDoReMi(noteChar) : simplifyCharTo123(noteChar);
-            const utter = new window.SpeechSynthesisUtterance(speakKey);
+            const positionInRow = noteInfo.colIndex; // 1-based position within current row
+            
+            // Determine what to say based on position and delimiters
+            let speechText;
+            if (delimiters.length === 0) {
+              // No delimiters: just say the position number
+              speechText = positionInRow.toString();
+            } else {
+              // With delimiters: alternate between numbers and delimiters
+              // Odd positions (1, 3, 5...): say the number (1, 2, 3...)
+              // Even positions (2, 4, 6...): say the delimiter
+              if (positionInRow % 2 === 1) {
+                // Odd position: say the sequential number (1st->1, 3rd->2, 5th->3, etc.)
+                const numberToSay = Math.ceil(positionInRow / 2);
+                speechText = numberToSay.toString();
+              } else {
+                // Even position: say the delimiter
+                speechText = delimiters[0] || 'n'; // Use first delimiter or default to 'n'
+              }
+            }
+            
+            const utter = new window.SpeechSynthesisUtterance(speechText);
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utter);
           }

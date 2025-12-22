@@ -13,11 +13,10 @@ Changes:
 - If the correct key is pressed, call simpleKeyboard.turnOn();
 - If the incorrect key is pressed, utter `Press ${correctKey}` and call simpleKeyboard.turnOff();
 */
-let doReMiMode = true;
 let songIdx = 0;
 let challengeMode = false;
 let noteSpeedRatio = 1.0;
-let speechEnabled = false;
+let speechEnabled = true;
 let lastPercussionPlayed = '';
 
 // Create independent percussion banner
@@ -76,7 +75,6 @@ function getConfigFromHash() {
 
 function setConfigToHash() {
   const params = [];
-  if (doReMiMode) params.push('doReMi=1');
   if (challengeMode) params.push('challenge=1');
   if (songIdx > 0) params.push('songIdx=' + songIdx);
   if (noteSpeedRatio !== 1.0) params.push('noteSpeedRatio=' + noteSpeedRatio.toFixed(2));
@@ -151,7 +149,6 @@ function runGame() {
     });
     
     await replay(songs[songIdx], {
-      doReMiMode: doReMiMode,
       noteSpeedRatio: noteSpeedRatio,
       speechEnabled: speechEnabled,
       onProgress: idx => {
@@ -187,7 +184,6 @@ function runGame() {
     delete melodyOnly.chords;
     
     replay(melodyOnly, {
-      doReMiMode: doReMiMode,
       noteSpeedRatio: noteSpeedRatio,
       speechEnabled: speechEnabled,
       onProgress: idx => {
@@ -200,15 +196,13 @@ function runGame() {
     });
   }
 
-  // Add navigation buttons and challenge/DoReMi checkboxes
+  // Add navigation buttons and challenge/speech checkboxes
   function addNavButtons() {
     // Remove if already present
     let prevBtn = document.getElementById('prevSongBtn');
     let nextBtn = document.getElementById('nextSongBtn');
     let challengeBox = document.getElementById('challengeCheckbox');
     let challengeLabel = document.getElementById('challengeLabel');
-    let doReMiBox = document.getElementById('doReMiCheckbox');
-    let doReMiLabel = document.getElementById('doReMiLabel');
     let speechBox = document.getElementById('speechCheckbox');
     let speechLabel = document.getElementById('speechLabel');
     let speedSlider = document.getElementById('speedSlider');
@@ -217,8 +211,6 @@ function runGame() {
     if (nextBtn) nextBtn.remove();
     if (challengeBox) challengeBox.remove();
     if (challengeLabel) challengeLabel.remove();
-    if (doReMiBox) doReMiBox.remove();
-    if (doReMiLabel) doReMiLabel.remove();
     if (speechBox) speechBox.remove();
     if (speechLabel) speechLabel.remove();
     if (speedSlider) speedSlider.remove();
@@ -262,31 +254,11 @@ function runGame() {
     challengeLabel.style.zIndex = 1000;
     challengeLabel.style.fontSize = '24px';
 
-    doReMiBox = document.createElement('input');
-    doReMiBox.type = 'checkbox';
-    doReMiBox.id = 'doReMiCheckbox';
-    doReMiBox.style.position = 'fixed';
-    doReMiBox.style.top = '110px';
-    doReMiBox.style.right = '40px';
-    doReMiBox.style.zIndex = 1000;
-    doReMiBox.style.transform = 'scale(1.5)';
-    doReMiBox.checked = doReMiMode;
-
-    doReMiLabel = document.createElement('label');
-    doReMiLabel.id = 'doReMiLabel';
-    doReMiLabel.htmlFor = 'doReMiCheckbox';
-    doReMiLabel.textContent = 'Do Re Mi';
-    doReMiLabel.style.position = 'fixed';
-    doReMiLabel.style.top = '110px';
-    doReMiLabel.style.right = '80px';
-    doReMiLabel.style.zIndex = 1000;
-    doReMiLabel.style.fontSize = '24px';
-
     speechBox = document.createElement('input');
     speechBox.type = 'checkbox';
     speechBox.id = 'speechCheckbox';
     speechBox.style.position = 'fixed';
-    speechBox.style.top = '150px';
+    speechBox.style.top = '110px';
     speechBox.style.right = '40px';
     speechBox.style.zIndex = 1000;
     speechBox.style.transform = 'scale(1.5)';
@@ -297,7 +269,7 @@ function runGame() {
     speechLabel.htmlFor = 'speechCheckbox';
     speechLabel.textContent = 'Speech';
     speechLabel.style.position = 'fixed';
-    speechLabel.style.top = '150px';
+    speechLabel.style.top = '110px';
     speechLabel.style.right = '80px';
     speechLabel.style.zIndex = 1000;
     speechLabel.style.fontSize = '24px';
@@ -310,7 +282,7 @@ function runGame() {
     speedSlider.step = '0.1';
     speedSlider.value = noteSpeedRatio;
     speedSlider.style.position = 'fixed';
-    speedSlider.style.top = '200px';
+    speedSlider.style.top = '160px';
     speedSlider.style.right = '40px';
     speedSlider.style.zIndex = 1000;
     speedSlider.style.width = '180px';
@@ -320,7 +292,7 @@ function runGame() {
     speedLabel.htmlFor = 'speedSlider';
     speedLabel.textContent = `Speed: ${noteSpeedRatio.toFixed(1)}x`;
     speedLabel.style.position = 'fixed';
-    speedLabel.style.top = '200px';
+    speedLabel.style.top = '160px';
     speedLabel.style.right = '230px';
     speedLabel.style.zIndex = 1000;
     speedLabel.style.fontSize = '24px';
@@ -332,7 +304,6 @@ function runGame() {
         keyIdx = 0;
         waitingForSpace = true;
         challengeMode = challengeBox.checked;
-        doReMiMode = doReMiBox.checked;
         speechEnabled = speechBox.checked;
         setConfigToHash();
         render();
@@ -348,7 +319,6 @@ function runGame() {
         keyIdx = 0;
         waitingForSpace = true;
         challengeMode = challengeBox.checked;
-        doReMiMode = doReMiBox.checked;
         speechEnabled = speechBox.checked;
         setConfigToHash();
         render();
@@ -359,11 +329,6 @@ function runGame() {
     };
     challengeBox.onchange = () => {
       challengeMode = challengeBox.checked;
-      setConfigToHash();
-      render();
-    };
-    doReMiBox.onchange = () => {
-      doReMiMode = doReMiBox.checked;
       setConfigToHash();
       render();
     };
@@ -382,8 +347,6 @@ function runGame() {
     document.body.appendChild(nextBtn);
     document.body.appendChild(challengeBox);
     document.body.appendChild(challengeLabel);
-    document.body.appendChild(doReMiBox);
-    document.body.appendChild(doReMiLabel);
     document.body.appendChild(speechBox);
     document.body.appendChild(speechLabel);
     document.body.appendChild(speedSlider);
@@ -611,7 +574,6 @@ function runGame() {
 // Read config from URL hash
 (function initFromHash() {
   const params = getConfigFromHash();
-  doReMiMode = params.doReMi === '1';
   challengeMode = params.challenge === '1';
   speechEnabled = params.speech !== '0'; // Default to true, false only if explicitly set to 0
   if (params.songIdx && !isNaN(params.songIdx)) {

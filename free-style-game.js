@@ -8,7 +8,7 @@ function playChord(notes) {
 			time: new Date().getTime(),
 			noteNumber,
 			channel: 0,
-			velocity: 120,
+			velocity: 90,  // Reduced by 25% from 120
 		});
 	});
 }
@@ -19,14 +19,14 @@ function releaseChord(notes) {
 			time: new Date().getTime(),
 			noteNumber,
 			channel: 0,
-			velocity: 120,
+			velocity: 90,  // Reduced by 25% from 120
 		});
 	});
 }
 
 function playDrumBeat(noteNumber) {
-	// Play drum beat on drum channel
-	MIDI.noteOn(DRUM_CHANNEL, noteNumber, 90);
+	// Play drum beat on drum channel (50% louder than piano)
+	MIDI.noteOn(DRUM_CHANNEL, noteNumber, 135);
 	setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, noteNumber), 200);
 }
 

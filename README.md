@@ -17,3 +17,17 @@
   - 8: 38,  // Acoustic Snare
   - 9: 56,  // Cowbell
   - 0: 46,  // Open Hi-Hat
+
+# m1c
+
+- Change the mapping to
+  - 1: Low Floor Tom
+  - 2: Open Triangle
+  - 3: Closed Hi-Hat
+  - 4: Side Stick
+  - 5: High Floor Tom
+  - 6: Tambourine
+  - 7: Open Hi-Hat
+  - 8: Cowbell
+  - 9: Ride Cymbal 1
+  - 0: Acoustic Snare

@@ -4,10 +4,10 @@ var volumeRange = 120;
 class SimpleKeyboard {
   constructor() {
     this.channel = 0;
-    this.velocity = 120;
+    this.velocity = 90;  // Reduced by 25% from 120
   }
   turnOn() {
-    this.velocity = 120;
+    this.velocity = 90;  // Reduced by 25% from 120
   }
   turnOff() {
     this.velocity = 0;

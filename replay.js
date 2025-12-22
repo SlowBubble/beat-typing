@@ -103,7 +103,7 @@ Given an item from songs, play each note
             time: new Date().getTime(),
             noteNumber: prevNoteNumber,
             channel: 0,
-            velocity: 120,
+            velocity: 90,  // Reduced by 25% from 120
           });
         }
         resolve();
@@ -136,14 +136,14 @@ Given an item from songs, play each note
                 time: new Date().getTime(),
                 noteNumber: prevNoteNumber,
                 channel: 0,
-                velocity: 80,
+                velocity: 60,  // Reduced by 25% from 80
               });
             }
             $(window).trigger('keyboardDown', {
               time: new Date().getTime(),
               noteNumber: noteNumber,
               channel: 0,
-              velocity: 80,
+              velocity: 60,  // Reduced by 25% from 80
             });
             prevNoteNumber = noteNumber;
           }, 90);
@@ -155,7 +155,7 @@ Given an item from songs, play each note
         window.setTimeout(_ => {
           // Play the specific drum sound for this chord character
           const drumNote = chordMap[chordChar][0];
-          MIDI.noteOn(DRUM_CHANNEL, drumNote, 90);
+          MIDI.noteOn(DRUM_CHANNEL, drumNote, 135);
           setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, drumNote), 150);
         }, 90);
       }

@@ -503,7 +503,7 @@ function runGame() {
     if (chordMap[e.key]) {
       // Play the specific drum sound for this number
       const drumNote = chordMap[e.key][0];
-      MIDI.noteOn(DRUM_CHANNEL, drumNote, 90);
+      MIDI.noteOn(DRUM_CHANNEL, drumNote, 135);
       setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, drumNote), 200);
       
       isReplaying = true;

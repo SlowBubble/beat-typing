@@ -1,16 +1,19 @@
 
-// Chord mapping for C major scale (MIDI note numbers)
+// Drum mapping for beat typing - numbers 0-9 play open triangle
 
 const chordMap = {
-  // Ionian mode
-  '1': [60 - 12, 64, 67 - 12], // C E G
-  '2': [62 - 12, 65, 69 - 12], // D F A
-  '3': [64 - 12, 67, 71 - 12], // E G B
-  '4': [65 - 24, 69, 72 - 24], // F A C
-  '5': [67 - 24, 71, 74 - 24], // G B D
-  '6': [69 - 24, 72, 76 - 24], // A C E
-  '7': [71 - 24, 74, 81 - 24], // B D A
-  // flats
+  // Numbers 0-9 all play open triangle (note 81) on drum channel
+  '0': [81], // Open Triangle
+  '1': [81], // Open Triangle
+  '2': [81], // Open Triangle
+  '3': [81], // Open Triangle
+  '4': [81], // Open Triangle
+  '5': [81], // Open Triangle
+  '6': [81], // Open Triangle
+  '7': [81], // Open Triangle
+  '8': [81], // Open Triangle
+  '9': [81], // Open Triangle
+  // Keep some original chord mappings for compatibility
   'q': [61 - 12, 65, 68 - 12], // Db F Ab
   'w': [63 - 12, 67, 70 - 12], // Eb G Bb
   'r': [66 - 24, 69, 72 - 24], // F# A C
@@ -25,9 +28,6 @@ const chordMap = {
   'h': [69 - 24, 73, 76 - 24], // A C# E
   'j': [71 - 24, 75, 78 - 24], // B D# F#
   // Dominant 7th chords
-  '8': [60 - 12, 64, 70 - 12], // C E Bb
-  '9': [62 - 12, 66, 72 - 12], // D F# C
-  '0': [64 - 12, 68, 74 - 12], // E G# D
   'i': [61 - 12, 65, 71 - 12], // Db F B
   'o': [63 - 12, 67, 73 - 12], // Eb G Db
   'k': [65 - 24, 69, 75 - 24], // F A Eb

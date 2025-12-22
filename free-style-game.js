@@ -24,18 +24,29 @@ function releaseChord(notes) {
 	});
 }
 
+function playDrumBeat(noteNumber) {
+	// Play drum beat on drum channel
+	MIDI.noteOn(DRUM_CHANNEL, noteNumber, 90);
+	setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, noteNumber), 200);
+}
 
 window.addEventListener('keydown', function(e) {
-	// Only respond to number keys 1-7 (top row)
+	// Only respond to number keys and other mapped keys
 	if (e.repeat) {
 		e.preventDefault();
     return;
   }
 	const key = e.key;
 	if (chordMap[key]) {
-		if (pressedChordKey !== key) {
-			playChord(chordMap[key]);
-			pressedChordKey = key;
+		// Check if it's a number 0-9 (drum beat)
+		if (key >= '0' && key <= '9') {
+			playDrumBeat(81); // Open triangle for all numbers
+		} else {
+			// Play chord for other keys
+			if (pressedChordKey !== key) {
+				playChord(chordMap[key]);
+				pressedChordKey = key;
+			}
 		}
 	} else if (!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
 		e.preventDefault();
@@ -44,7 +55,8 @@ window.addEventListener('keydown', function(e) {
 
 window.addEventListener('keyup', function(e) {
 	const key = e.key;
-	if (chordMap[key] && pressedChordKey === key) {
+	// Only release chords for non-number keys (numbers are drum beats that auto-release)
+	if (chordMap[key] && pressedChordKey === key && !(key >= '0' && key <= '9')) {
 		releaseChord(chordMap[key]);
 		pressedChordKey = null;
 	}

@@ -80,12 +80,14 @@ const simpleKeyboard = new SimpleKeyboard;
 window.onload = function () {
 	MIDI.loadPlugin({
 		soundfontUrl: "lib/midi.js/soundfont/",
-		instrument: "acoustic_grand_piano",
+		instruments: ["acoustic_grand_piano", "synth_drum"],
 		onprogress: function(state, progress) {
 			console.log(state, progress);
 		},
 		onsuccess: function() {
-            console.log('Piano is loaded.');
+            console.log('Piano and drums loaded.');
+            // Set synth_drum for the drum channel
+            MIDI.programChange(DRUM_CHANNEL, MIDI.GM.byName["synth_drum"].number);
             loadSound();
             // simpleKeyboard.connectKeyToKeyboard();
 		}

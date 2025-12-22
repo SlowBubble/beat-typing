@@ -94,7 +94,6 @@ Given an item from songs, play each note
   return new Promise(resolve => {
     let idx = 0;
     let prevNoteNumber = null;
-    let prevChordNotes = [];
     function playNext() {
       if (onProgress) onProgress(idx);
       if (idx >= maxLen) {
@@ -105,16 +104,6 @@ Given an item from songs, play each note
             noteNumber: prevNoteNumber,
             channel: 0,
             velocity: 120,
-          });
-        }
-        if (prevChordNotes.length > 0) {
-          prevChordNotes.forEach(noteNumber => {
-            $(window).trigger('keyboardUp', {
-              time: new Date().getTime(),
-              noteNumber,
-              channel: 0,
-              velocity: 120,
-            });
           });
         }
         resolve();
@@ -161,32 +150,14 @@ Given an item from songs, play each note
         }
       }
 
-      // Play chord
+      // Play drum beat instead of chord
       if (chordChar !== '_' && chordMap[chordChar]) {
         window.setTimeout(_ => {
-          // Only release previous chord notes when a new chord is played
-          if (prevChordNotes.length > 0) {
-            prevChordNotes.forEach(noteNumber => {
-              $(window).trigger('keyboardUp', {
-                time: new Date().getTime(),
-                noteNumber,
-                channel: 0,
-                velocity: 80,
-              });
-            });
-          }
-          chordMap[chordChar].forEach(noteNumber => {
-            $(window).trigger('keyboardDown', {
-              time: new Date().getTime(),
-              noteNumber,
-              channel: 0,
-              velocity: 60,
-            });
-          });
-          prevChordNotes = chordMap[chordChar].slice();
+          // Play open triangle on drum channel for any chord character
+          MIDI.noteOn(DRUM_CHANNEL, 81, 90);
+          setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, 81), 150);
         }, 90);
       }
-      // Do NOT release chord notes if chordChar is '_'; keep them held until next chord
 
       idx++;
       setTimeout(playNext, dur);

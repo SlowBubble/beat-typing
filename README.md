@@ -1,7 +1,6 @@
 
-# TODO
-
-- Highlight the current note more saliently (using a solid rectangle border)
-- Multi-section song not rendered properly
-- Build a easier level that waits for you to press the chord
-  - There is a lag for melody, so consider sounding the melody at the same time as the chord.
+# m1a
+- I want to change the game from chord typing to beat typing
+  - Initialize drums in addition to the piano (see the example in old.js)
+  - Instead of playing the chords when the numbers show up, play the following instead:
+    - 0-9: Open Triangle

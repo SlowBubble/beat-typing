@@ -18,6 +18,51 @@ let songIdx = 0;
 let challengeMode = false;
 let noteSpeedRatio = 1.0;
 let speechEnabled = false;
+let lastPercussionPlayed = '';
+
+// Create independent percussion banner
+function createPercussionBanner() {
+  let banner = document.getElementById('percussionBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'percussionBanner';
+    banner.style.position = 'fixed';
+    banner.style.top = '10px';
+    banner.style.left = '50%';
+    banner.style.transform = 'translateX(-50%)';
+    banner.style.backgroundColor = 'rgba(0, 100, 200, 0.9)';
+    banner.style.color = 'white';
+    banner.style.padding = '10px 20px';
+    banner.style.borderRadius = '25px';
+    banner.style.fontSize = '24px';
+    banner.style.fontFamily = 'Arial, sans-serif';
+    banner.style.fontWeight = 'bold';
+    banner.style.zIndex = '2000';
+    banner.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+    banner.style.display = 'none';
+    banner.style.transition = 'all 0.3s ease';
+    document.body.appendChild(banner);
+  }
+  return banner;
+}
+
+// Update percussion banner
+function updatePercussionBanner(percussionName) {
+  const banner = createPercussionBanner();
+  if (percussionName) {
+    banner.textContent = `♪ ${percussionName} ♪`;
+    banner.style.display = 'block';
+    lastPercussionPlayed = percussionName;
+  }
+}
+
+// Independent percussion tracking - listens for all keydown events
+window.addEventListener('keydown', function(e) {
+  const percussionName = getPercussionNameFromKey(e.key);
+  if (percussionName) {
+    updatePercussionBanner(percussionName);
+  }
+});
 
 function getConfigFromHash() {
   const hash = window.location.hash.replace(/^#/, '');
@@ -78,6 +123,7 @@ function runGame() {
 
   function renderPressSpace() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
     ctx.font = '48px Arial';
     ctx.fillStyle = 'black';
     ctx.fillText('Press space', 40, 80);
@@ -351,6 +397,7 @@ function runGame() {
       return;
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
     if (gameOver) {
       ctx.font = '80px Arial';
       ctx.fillStyle = 'black';

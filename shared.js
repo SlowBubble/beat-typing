@@ -3,41 +3,75 @@
 const chordMap = {
   // Numbers 1-9 and 0 play different drum sounds
   '1': [81], // Open Triangle
-  '2': [51], // Ride Cymbal 1
-  '3': [54], // Tambourine
+  '2': [54], // Tambourine
+  '3': [51], // Ride Cymbal 1
   '4': [37], // Side Stick
-  '5': [41], // Low Floor Tom
-  '6': [42], // Closed Hi-Hat
-  '7': [56], // Cowbell
+  '5': [42], // Closed Hi-Hat
+  '6': [56], // Cowbell
+  '7': [41], // Low Floor Tom
   '8': [38], // Acoustic Snare
-  '9': [43], // High Floor Tom
-  '0': [49], // Crash Cymbal 1
-  // Keep some original chord mappings for compatibility
-  'q': [61 - 12, 65, 68 - 12], // Db F Ab
-  'w': [63 - 12, 67, 70 - 12], // Eb G Bb
-  'r': [66 - 24, 69, 72 - 24], // F# A C
-  't': [68 - 24, 72, 75 - 24], // Ab C Eb
-  'y': [70 - 24, 74, 77 - 24], // Bb D F
-  // Opposite quality of Ionian mode
-  'a': [60 - 12, 63, 67 - 12], // C Eb G
-  's': [62 - 12, 66, 69 - 12], // D F# A
-  'd': [64 - 12, 68, 71 - 12], // E G# B
-  'f': [65 - 24, 68, 72 - 24], // F Ab C
-  'g': [67 - 24, 70, 74 - 24], // G Bb D
-  'h': [69 - 24, 73, 76 - 24], // A C# E
-  'j': [71 - 24, 75, 78 - 24], // B D# F#
-  // Dominant 7th chords
-  'i': [61 - 12, 65, 71 - 12], // Db F B
-  'o': [63 - 12, 67, 73 - 12], // Eb G Db
-  'k': [65 - 24, 69, 75 - 24], // F A Eb
-  'l': [67 - 24, 71, 77 - 24], // G B F
-  ';': [69 - 24, 73, 79 - 24], // A C# G
-  "'": [71 - 24, 75, 81 - 24], // B D# A
-  ',': [66 - 24, 70, 76 - 24], // Gb Bb Fb
-  '.': [68 - 24, 72, 78 - 24], // Ab C Gb
-  '/': [70 - 24, 74, 80 - 24],  // Bb D Ab
-  //
+  '9': [49], // Crash Cymbal 1
+  '0': [43], // High Floor Tom
 };
+
+// MIDI note number to percussion instrument name mapping
+const percussionNames = {
+  36: 'Bass Drum 1',
+  37: 'Side Stick',
+  38: 'Acoustic Snare',
+  39: 'Hand Clap',
+  40: 'Electric Snare',
+  41: 'Low Floor Tom',
+  42: 'Closed Hi-Hat',
+  43: 'High Floor Tom',
+  44: 'Pedal Hi-Hat',
+  45: 'Low Tom',
+  46: 'Open Hi-Hat',
+  47: 'Low-Mid Tom',
+  48: 'Hi-Mid Tom',
+  49: 'Crash Cymbal 1',
+  50: 'High Tom',
+  51: 'Ride Cymbal 1',
+  52: 'Chinese Cymbal',
+  53: 'Ride Bell',
+  54: 'Tambourine',
+  55: 'Splash Cymbal',
+  56: 'Cowbell',
+  57: 'Crash Cymbal 2',
+  58: 'Vibraslap',
+  59: 'Ride Cymbal 2',
+  60: 'Hi Bongo',
+  61: 'Low Bongo',
+  62: 'Mute Hi Conga',
+  63: 'Open Hi Conga',
+  64: 'Low Conga',
+  65: 'High Timbale',
+  66: 'Low Timbale',
+  67: 'High Agogo',
+  68: 'Low Agogo',
+  69: 'Cabasa',
+  70: 'Maracas',
+  71: 'Short Whistle',
+  72: 'Long Whistle',
+  73: 'Short Guiro',
+  74: 'Long Guiro',
+  75: 'Claves',
+  76: 'Hi Wood Block',
+  77: 'Low Wood Block',
+  78: 'Mute Cuica',
+  79: 'Open Cuica',
+  80: 'Mute Triangle',
+  81: 'Open Triangle'
+};
+
+// Helper function to get percussion name from key
+function getPercussionNameFromKey(key) {
+  if (chordMap[key] && key >= '0' && key <= '9') {
+    const noteNumber = chordMap[key][0];
+    return percussionNames[noteNumber] || `Percussion ${noteNumber}`;
+  }
+  return null;
+}
 
 function simplifyCharTo123(char) {
   if (char === '7') {

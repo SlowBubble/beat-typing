@@ -17,6 +17,7 @@ let doReMiMode = true;
 let songIdx = 0;
 let challengeMode = false;
 let noteSpeedRatio = 1.0;
+let speechEnabled = false;
 
 function getConfigFromHash() {
   const hash = window.location.hash.replace(/^#/, '');
@@ -34,6 +35,7 @@ function setConfigToHash() {
   if (challengeMode) params.push('challenge=1');
   if (songIdx > 0) params.push('songIdx=' + songIdx);
   if (noteSpeedRatio !== 1.0) params.push('noteSpeedRatio=' + noteSpeedRatio.toFixed(2));
+  if (!speechEnabled) params.push('speech=0');
   window.location.hash = params.join('&');
 }
 
@@ -91,6 +93,7 @@ function runGame() {
     flatChords = flattenChords(songs[songIdx], sectionIdx);
     replayFinished = false;
     renderPressSpace();
+    
     const utter1 = new window.SpeechSynthesisUtterance('Listen to this!');
     window.speechSynthesis.cancel();
     await new Promise(resolve => {
@@ -100,9 +103,11 @@ function runGame() {
       utter1.onerror = resolve;
       window.speechSynthesis.speak(utter1);
     });
+    
     await replay(songs[songIdx], {
       doReMiMode: doReMiMode,
       noteSpeedRatio: noteSpeedRatio,
+      speechEnabled: speechEnabled,
       onProgress: idx => {
         keyIdx = idx + 1;
         render();
@@ -111,9 +116,11 @@ function runGame() {
     replayFinished = true;
     keyIdx = 0;
     render();
+    
     const utter2 = new window.SpeechSynthesisUtterance('Can you play it?');
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utter2);
+    
     window.addEventListener('keydown', handleAnyKey);
   }
 
@@ -136,6 +143,7 @@ function runGame() {
     replay(melodyOnly, {
       doReMiMode: doReMiMode,
       noteSpeedRatio: noteSpeedRatio,
+      speechEnabled: speechEnabled,
       onProgress: idx => {
         keyIdx = idx + 1;
         render();
@@ -155,6 +163,8 @@ function runGame() {
     let challengeLabel = document.getElementById('challengeLabel');
     let doReMiBox = document.getElementById('doReMiCheckbox');
     let doReMiLabel = document.getElementById('doReMiLabel');
+    let speechBox = document.getElementById('speechCheckbox');
+    let speechLabel = document.getElementById('speechLabel');
     let speedSlider = document.getElementById('speedSlider');
     let speedLabel = document.getElementById('speedLabel');
     if (prevBtn) prevBtn.remove();
@@ -163,6 +173,8 @@ function runGame() {
     if (challengeLabel) challengeLabel.remove();
     if (doReMiBox) doReMiBox.remove();
     if (doReMiLabel) doReMiLabel.remove();
+    if (speechBox) speechBox.remove();
+    if (speechLabel) speechLabel.remove();
     if (speedSlider) speedSlider.remove();
     if (speedLabel) speedLabel.remove();
 
@@ -224,6 +236,26 @@ function runGame() {
     doReMiLabel.style.zIndex = 1000;
     doReMiLabel.style.fontSize = '24px';
 
+    speechBox = document.createElement('input');
+    speechBox.type = 'checkbox';
+    speechBox.id = 'speechCheckbox';
+    speechBox.style.position = 'fixed';
+    speechBox.style.top = '150px';
+    speechBox.style.right = '40px';
+    speechBox.style.zIndex = 1000;
+    speechBox.style.transform = 'scale(1.5)';
+    speechBox.checked = speechEnabled;
+
+    speechLabel = document.createElement('label');
+    speechLabel.id = 'speechLabel';
+    speechLabel.htmlFor = 'speechCheckbox';
+    speechLabel.textContent = 'Speech';
+    speechLabel.style.position = 'fixed';
+    speechLabel.style.top = '150px';
+    speechLabel.style.right = '80px';
+    speechLabel.style.zIndex = 1000;
+    speechLabel.style.fontSize = '24px';
+
     speedSlider = document.createElement('input');
     speedSlider.type = 'range';
     speedSlider.id = 'speedSlider';
@@ -232,7 +264,7 @@ function runGame() {
     speedSlider.step = '0.1';
     speedSlider.value = noteSpeedRatio;
     speedSlider.style.position = 'fixed';
-    speedSlider.style.top = '160px';
+    speedSlider.style.top = '200px';
     speedSlider.style.right = '40px';
     speedSlider.style.zIndex = 1000;
     speedSlider.style.width = '180px';
@@ -242,7 +274,7 @@ function runGame() {
     speedLabel.htmlFor = 'speedSlider';
     speedLabel.textContent = `Speed: ${noteSpeedRatio.toFixed(1)}x`;
     speedLabel.style.position = 'fixed';
-    speedLabel.style.top = '160px';
+    speedLabel.style.top = '200px';
     speedLabel.style.right = '230px';
     speedLabel.style.zIndex = 1000;
     speedLabel.style.fontSize = '24px';
@@ -255,9 +287,10 @@ function runGame() {
         waitingForSpace = true;
         challengeMode = challengeBox.checked;
         doReMiMode = doReMiBox.checked;
+        speechEnabled = speechBox.checked;
         setConfigToHash();
         render();
-        window.removeEventListener('keydown', handleChordKey);
+        window.removeEventListener('keydown', handleAnyKey);
         window.removeEventListener('keydown', handleSpace);
         window.addEventListener('keydown', handleSpace);
       }
@@ -270,9 +303,10 @@ function runGame() {
         waitingForSpace = true;
         challengeMode = challengeBox.checked;
         doReMiMode = doReMiBox.checked;
+        speechEnabled = speechBox.checked;
         setConfigToHash();
         render();
-        window.removeEventListener('keydown', handleChordKey);
+        window.removeEventListener('keydown', handleAnyKey);
         window.removeEventListener('keydown', handleSpace);
         window.addEventListener('keydown', handleSpace);
       }
@@ -284,6 +318,11 @@ function runGame() {
     };
     doReMiBox.onchange = () => {
       doReMiMode = doReMiBox.checked;
+      setConfigToHash();
+      render();
+    };
+    speechBox.onchange = () => {
+      speechEnabled = speechBox.checked;
       setConfigToHash();
       render();
     };
@@ -299,6 +338,8 @@ function runGame() {
     document.body.appendChild(challengeLabel);
     document.body.appendChild(doReMiBox);
     document.body.appendChild(doReMiLabel);
+    document.body.appendChild(speechBox);
+    document.body.appendChild(speechLabel);
     document.body.appendChild(speedSlider);
     document.body.appendChild(speedLabel);
   }
@@ -525,6 +566,7 @@ function runGame() {
   const params = getConfigFromHash();
   doReMiMode = params.doReMi === '1';
   challengeMode = params.challenge === '1';
+  speechEnabled = params.speech !== '0'; // Default to true, false only if explicitly set to 0
   if (params.songIdx && !isNaN(params.songIdx)) {
     songIdx = Math.max(0, Math.min(songs.length - 1, parseInt(params.songIdx, 10)));
   }

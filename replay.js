@@ -64,6 +64,7 @@ Given an item from songs, play each note
  function replay(song, opts = {}) {
   const noteDurMs = (song.noteDurMs || 800) / (opts.noteSpeedRatio || 1.0);
   const doReMiMode = opts.doReMiMode || false;
+  const speechEnabled = opts.speechEnabled !== false; // Default to true
   const onProgress = opts.onProgress;
 
   // Helper to flatten a section array into a sequence of notes (including '_')
@@ -123,8 +124,8 @@ Given an item from songs, play each note
         let noteNumber = charToNoteNum[noteChar];
         if (typeof noteNumber !== "undefined") {
           noteNumber += 12; // Play one octave higher than mapping
-          // Utter the character at the same time
-          if (typeof window.speechSynthesis !== "undefined") {
+          // Utter the character at the same time (only if speech is enabled)
+          if (speechEnabled && typeof window.speechSynthesis !== "undefined") {
             const speakKey = doReMiMode ? simplifyCharToDoReMi(noteChar) : simplifyCharTo123(noteChar);
             const utter = new window.SpeechSynthesisUtterance(speakKey);
             window.speechSynthesis.cancel();

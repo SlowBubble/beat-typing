@@ -1,18 +1,18 @@
 
-// Drum mapping for beat typing - numbers 0-9 play open triangle
+// Drum mapping for beat typing - different drum sounds for each number
 
 const chordMap = {
-  // Numbers 0-9 all play open triangle (note 81) on drum channel
-  '0': [81], // Open Triangle
+  // Numbers 1-9 and 0 play different drum sounds
   '1': [81], // Open Triangle
-  '2': [81], // Open Triangle
-  '3': [81], // Open Triangle
-  '4': [81], // Open Triangle
-  '5': [81], // Open Triangle
-  '6': [81], // Open Triangle
-  '7': [81], // Open Triangle
-  '8': [81], // Open Triangle
-  '9': [81], // Open Triangle
+  '2': [42], // Closed Hi Hat
+  '3': [36], // Bass Drum 1
+  '4': [37], // Side Stick
+  '5': [54], // Tambourine
+  '6': [44], // Pedal Hi-Hat
+  '7': [41], // Low Floor Tom
+  '8': [38], // Acoustic Snare
+  '9': [56], // Cowbell
+  '0': [46], // Open Hi-Hat
   // Keep some original chord mappings for compatibility
   'q': [61 - 12, 65, 68 - 12], // Db F Ab
   'w': [63 - 12, 67, 70 - 12], // Eb G Bb

@@ -53,18 +53,18 @@ function runGame() {
   let isReplaying = false;
   let replayFinished = false;
 
-  // Get drumMap for beat typing - numbers 0-9 play open triangle
+  // Get drumMap for beat typing - different drum sounds for each number
   const chordMap = {
-    '0': [81], // Open Triangle
     '1': [81], // Open Triangle
-    '2': [81], // Open Triangle
-    '3': [81], // Open Triangle
-    '4': [81], // Open Triangle
-    '5': [81], // Open Triangle
-    '6': [81], // Open Triangle
-    '7': [81], // Open Triangle
-    '8': [81], // Open Triangle
-    '9': [81], // Open Triangle
+    '2': [42], // Closed Hi Hat
+    '3': [36], // Bass Drum 1
+    '4': [37], // Side Stick
+    '5': [54], // Tambourine
+    '6': [44], // Pedal Hi-Hat
+    '7': [41], // Low Floor Tom
+    '8': [38], // Acoustic Snare
+    '9': [56], // Cowbell
+    '0': [46], // Open Hi-Hat
   };
 
   function flattenChords(song, sectionIdx) {
@@ -501,9 +501,10 @@ function runGame() {
     
     // Check if the key pressed is a number 0-9 for drum beats
     if (chordMap[e.key]) {
-      // Play open triangle on drum channel
-      MIDI.noteOn(DRUM_CHANNEL, 81, 90);
-      setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, 81), 200);
+      // Play the specific drum sound for this number
+      const drumNote = chordMap[e.key][0];
+      MIDI.noteOn(DRUM_CHANNEL, drumNote, 90);
+      setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, drumNote), 200);
       
       isReplaying = true;
       window.removeEventListener('keydown', handleChordKey);

@@ -153,9 +153,10 @@ Given an item from songs, play each note
       // Play drum beat instead of chord
       if (chordChar !== '_' && chordMap[chordChar]) {
         window.setTimeout(_ => {
-          // Play open triangle on drum channel for any chord character
-          MIDI.noteOn(DRUM_CHANNEL, 81, 90);
-          setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, 81), 150);
+          // Play the specific drum sound for this chord character
+          const drumNote = chordMap[chordChar][0];
+          MIDI.noteOn(DRUM_CHANNEL, drumNote, 90);
+          setTimeout(() => MIDI.noteOff(DRUM_CHANNEL, drumNote), 150);
         }, 90);
       }
 

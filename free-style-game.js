@@ -40,7 +40,8 @@ window.addEventListener('keydown', function(e) {
 	if (chordMap[key]) {
 		// Check if it's a number 0-9 (drum beat)
 		if (key >= '0' && key <= '9') {
-			playDrumBeat(81); // Open triangle for all numbers
+			const drumNote = chordMap[key][0];
+			playDrumBeat(drumNote);
 		} else {
 			// Play chord for other keys
 			if (pressedChordKey !== key) {

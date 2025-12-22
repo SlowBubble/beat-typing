@@ -1,4 +1,3 @@
-
 # m1a
 - I want to change the game from chord typing to beat typing
   - Initialize drums in addition to the piano (see the example in old.js)
@@ -21,13 +20,13 @@
 # m1c
 
 - Change the mapping to
-  - 1: Low Floor Tom
-  - 2: Open Triangle
-  - 3: Closed Hi-Hat
+  - 1: Open Triangle
+  - 2: Ride Cymbal 1
+  - 3: Tambourine
   - 4: Side Stick
-  - 5: High Floor Tom
-  - 6: Tambourine
-  - 7: Open Hi-Hat
-  - 8: Cowbell
-  - 9: Ride Cymbal 1
-  - 0: Acoustic Snare
+  - 5: Low Floor Tom
+  - 6: Closed Hi-Hat
+  - 7: Cowbell
+  - 8: Acoustic Snare
+  - 9: High Floor Tom
+  - 0: Open Hi-Hat

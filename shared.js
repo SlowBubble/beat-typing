@@ -1,18 +1,17 @@
-
 // Drum mapping for beat typing - different drum sounds for each number
 
 const chordMap = {
   // Numbers 1-9 and 0 play different drum sounds
   '1': [81], // Open Triangle
-  '2': [42], // Closed Hi Hat
-  '3': [36], // Bass Drum 1
+  '2': [51], // Ride Cymbal 1
+  '3': [54], // Tambourine
   '4': [37], // Side Stick
-  '5': [54], // Tambourine
-  '6': [44], // Pedal Hi-Hat
-  '7': [41], // Low Floor Tom
+  '5': [41], // Low Floor Tom
+  '6': [42], // Closed Hi-Hat
+  '7': [56], // Cowbell
   '8': [38], // Acoustic Snare
-  '9': [56], // Cowbell
-  '0': [46], // Open Hi-Hat
+  '9': [43], // High Floor Tom
+  '0': [49], // Crash Cymbal 1
   // Keep some original chord mappings for compatibility
   'q': [61 - 12, 65, 68 - 12], // Db F Ab
   'w': [63 - 12, 67, 70 - 12], // Eb G Bb

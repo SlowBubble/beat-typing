@@ -140,38 +140,40 @@ Given an item from songs, play each note
       // Chord
       const chordChar = chords ? (chords[idx] || '_') : '_';
 
+      // Speech on every beat (regardless of whether there's a note or rest)
+      if (speechEnabled && typeof window.speechSynthesis !== "undefined") {
+        const positionInRow = noteInfo.colIndex; // 1-based position within current row
+        
+        // Determine what to say based on position and delimiters
+        let speechText;
+        if (delimiters.length === 0) {
+          // No delimiters: just say the position number
+          speechText = positionInRow.toString();
+        } else {
+          // With delimiters: alternate between numbers and delimiters
+          // Odd positions (1, 3, 5...): say the number (1, 2, 3...)
+          // Even positions (2, 4, 6...): say the delimiter
+          if (positionInRow % 2 === 1) {
+            // Odd position: say the sequential number (1st->1, 3rd->2, 5th->3, etc.)
+            const numberToSay = Math.ceil(positionInRow / 2);
+            speechText = numberToSay.toString();
+          } else {
+            // Even position: say the delimiter
+            speechText = delimiters[0] || 'n'; // Use first delimiter or default to 'n'
+          }
+        }
+        
+        const utter = new window.SpeechSynthesisUtterance(speechText);
+        utter.volume = 0.5; // Reduce volume by 50%
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utter);
+      }
+
       // Play main melody note
       if (noteChar !== '_') {
         let noteNumber = charToNoteNum[noteChar];
         if (typeof noteNumber !== "undefined") {
           noteNumber += 12; // Play one octave higher than mapping
-          // Utter the position within the current row (only if speech is enabled)
-          if (speechEnabled && typeof window.speechSynthesis !== "undefined") {
-            const positionInRow = noteInfo.colIndex; // 1-based position within current row
-            
-            // Determine what to say based on position and delimiters
-            let speechText;
-            if (delimiters.length === 0) {
-              // No delimiters: just say the position number
-              speechText = positionInRow.toString();
-            } else {
-              // With delimiters: alternate between numbers and delimiters
-              // Odd positions (1, 3, 5...): say the number (1, 2, 3...)
-              // Even positions (2, 4, 6...): say the delimiter
-              if (positionInRow % 2 === 1) {
-                // Odd position: say the sequential number (1st->1, 3rd->2, 5th->3, etc.)
-                const numberToSay = Math.ceil(positionInRow / 2);
-                speechText = numberToSay.toString();
-              } else {
-                // Even position: say the delimiter
-                speechText = delimiters[0] || 'n'; // Use first delimiter or default to 'n'
-              }
-            }
-            
-            const utter = new window.SpeechSynthesisUtterance(speechText);
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utter);
-          }
           window.setTimeout(_ => {
             if (prevNoteNumber !== null) {
               $(window).trigger('keyboardUp', {

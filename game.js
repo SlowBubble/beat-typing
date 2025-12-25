@@ -18,8 +18,89 @@ let challengeMode = false;
 let noteSpeedRatio = 1.0;
 let speechEnabled = true;
 let lastPercussionPlayed = '';
+let restrictedAttemptsMode = false;
+let attemptsLeft = 0;
+let maxAttempts = 0;
 
-// Create independent percussion banner
+// Create attempts banner
+function createAttemptsBanner() {
+  let banner = document.getElementById('attemptsBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'attemptsBanner';
+    banner.style.position = 'fixed';
+    banner.style.bottom = '20px';
+    banner.style.right = '20px';
+    banner.style.backgroundColor = 'rgba(200, 0, 0, 0.9)';
+    banner.style.color = 'white';
+    banner.style.padding = '10px 20px';
+    banner.style.borderRadius = '25px';
+    banner.style.fontSize = '20px';
+    banner.style.fontFamily = 'Arial, sans-serif';
+    banner.style.fontWeight = 'bold';
+    banner.style.zIndex = '2000';
+    banner.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+    banner.style.display = 'none';
+    banner.style.transition = 'all 0.3s ease';
+    banner.style.minWidth = '200px';
+    banner.style.textAlign = 'center';
+    document.body.appendChild(banner);
+  }
+  return banner;
+}
+
+// Update attempts banner
+function updateAttemptsBanner() {
+  const banner = createAttemptsBanner();
+  if (restrictedAttemptsMode) {
+    banner.textContent = `Attempts left: ${attemptsLeft}`;
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+// Calculate max attempts for entire song (all sections)
+function calculateMaxAttempts(song, sectionIdx) {
+  if (!song.chords) return 2; // Default minimum attempts
+  
+  let totalNumberCount = 0;
+  
+  // Count numbers across all sections of the song
+  song.chords.forEach(section => {
+    if (typeof section === 'string') {
+      // Handle flat chord array format
+      const chords = section.split(' ');
+      chords.forEach(chord => {
+        if (chord !== '_' && chord !== '') {
+          // Count actual numbers (0-9) in the chord
+          for (let char of chord) {
+            if (char >= '0' && char <= '9') {
+              totalNumberCount++;
+            }
+          }
+        }
+      });
+    } else {
+      // Handle 2D array format
+      section.forEach(row => {
+        const chords = row.split(' ');
+        chords.forEach(chord => {
+          if (chord !== '_' && chord !== '') {
+            // Count actual numbers (0-9) in the chord
+            for (let char of chord) {
+              if (char >= '0' && char <= '9') {
+                totalNumberCount++;
+              }
+            }
+          }
+        });
+      });
+    }
+  });
+  
+  return totalNumberCount * 2; // Multiply by 2 instead of adding 2
+}
 function createPercussionBanner() {
   let banner = document.getElementById('percussionBanner');
   if (!banner) {
@@ -63,6 +144,19 @@ window.addEventListener('keydown', function(e) {
   }
 });
 
+// Independent attempts tracking - listens for number key presses (0-9)
+window.addEventListener('keydown', function(e) {
+  // Only track number keys 0-9 for attempts in restricted mode
+  if (restrictedAttemptsMode && e.key >= '0' && e.key <= '9' && !e.repeat) {
+    if (attemptsLeft > 0) {
+      attemptsLeft--;
+      updateAttemptsBanner();
+      // Update shared state so free-style-game knows about attempts
+      updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+    }
+  }
+});
+
 function getConfigFromHash() {
   const hash = window.location.hash.replace(/^#/, '');
   const params = {};
@@ -76,6 +170,7 @@ function getConfigFromHash() {
 function setConfigToHash() {
   const params = [];
   if (challengeMode) params.push('challenge=1');
+  if (restrictedAttemptsMode) params.push('restricted_attempts=1');
   if (songIdx > 0) params.push('songIdx=' + songIdx);
   if (noteSpeedRatio !== 1.0) params.push('noteSpeedRatio=' + noteSpeedRatio.toFixed(2));
   if (!speechEnabled) params.push('speech=0');
@@ -136,6 +231,16 @@ function runGame() {
     keyIdx = 0;
     flatChords = flattenChords(songs[songIdx], sectionIdx);
     replayFinished = false;
+    
+    // Initialize attempts counter for restricted attempts mode
+    if (restrictedAttemptsMode) {
+      maxAttempts = calculateMaxAttempts(songs[songIdx], sectionIdx);
+      attemptsLeft = maxAttempts;
+      updateAttemptsBanner();
+      // Update shared state so free-style-game knows about attempts
+      updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+    }
+    
     renderPressSpace();
     
     const utter1 = new window.SpeechSynthesisUtterance('Listen to this!');
@@ -172,6 +277,11 @@ function runGame() {
     if (gameOver) return;
     if (isReplaying) return;
     
+    // In restricted attempts mode, don't replay if no attempts left
+    if (restrictedAttemptsMode && attemptsLeft <= 0) {
+      return;
+    }
+    
     // Ignore modifier keys and special keys
     if (e.key.length > 1 && !['Space', 'Enter'].includes(e.key)) return;
     
@@ -191,111 +301,226 @@ function runGame() {
         render();
       }
     }).then(() => {
-      nextSectionOrSong();
       isReplaying = false;
+      // Original behavior: automatically move to next section/song
+      nextSectionOrSong();
     });
   }
 
   // Add navigation buttons and challenge/speech checkboxes
   function addNavButtons() {
-    // Remove if already present
+    // Only create elements if they don't exist
     let prevBtn = document.getElementById('prevSongBtn');
     let nextBtn = document.getElementById('nextSongBtn');
     let challengeBox = document.getElementById('challengeCheckbox');
     let challengeLabel = document.getElementById('challengeLabel');
     let speechBox = document.getElementById('speechCheckbox');
     let speechLabel = document.getElementById('speechLabel');
+    let restrictedAttemptsBox = document.getElementById('restrictedAttemptsCheckbox');
+    let restrictedAttemptsLabel = document.getElementById('restrictedAttemptsLabel');
     let speedSlider = document.getElementById('speedSlider');
     let speedLabel = document.getElementById('speedLabel');
-    if (prevBtn) prevBtn.remove();
-    if (nextBtn) nextBtn.remove();
-    if (challengeBox) challengeBox.remove();
-    if (challengeLabel) challengeLabel.remove();
-    if (speechBox) speechBox.remove();
-    if (speechLabel) speechLabel.remove();
-    if (speedSlider) speedSlider.remove();
-    if (speedLabel) speedLabel.remove();
+    
+    // Only create if they don't exist
+    if (!prevBtn) {
+      prevBtn = document.createElement('button');
+      prevBtn.id = 'prevSongBtn';
+      prevBtn.textContent = '⟨ Prev Song';
+      prevBtn.style.position = 'fixed';
+      prevBtn.style.top = '20px';
+      prevBtn.style.right = '180px';
+      prevBtn.style.zIndex = 1000;
+      prevBtn.style.fontSize = '24px';
+      
+      prevBtn.onclick = () => {
+        if (songIdx > 0) {
+          songIdx--;
+          sectionIdx = 0;
+          keyIdx = 0;
+          waitingForSpace = true;
+          challengeMode = document.getElementById('challengeCheckbox').checked;
+          speechEnabled = document.getElementById('speechCheckbox').checked;
+          restrictedAttemptsMode = document.getElementById('restrictedAttemptsCheckbox').checked;
+          
+          // Reset attempts counter for new song in restricted attempts mode
+          if (restrictedAttemptsMode) {
+            maxAttempts = calculateMaxAttempts(songs[songIdx], sectionIdx);
+            attemptsLeft = maxAttempts;
+            updateAttemptsBanner();
+            // Update shared state so free-style-game knows about attempts
+            updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+          } else {
+            // Make sure shared state is updated even when not in restricted mode
+            updateAttemptsState(false, 0);
+          }
+          
+          setConfigToHash();
+          render();
+          window.removeEventListener('keydown', handleAnyKey);
+          window.removeEventListener('keydown', handleSpace);
+          window.addEventListener('keydown', handleSpace);
+        }
+      };
+      
+      document.body.appendChild(prevBtn);
+    }
 
-    prevBtn = document.createElement('button');
-    prevBtn.id = 'prevSongBtn';
-    prevBtn.textContent = '⟨ Prev Song';
-    prevBtn.style.position = 'fixed';
-    prevBtn.style.top = '20px';
-    prevBtn.style.right = '180px';
-    prevBtn.style.zIndex = 1000;
-    prevBtn.style.fontSize = '24px';
+    if (!nextBtn) {
+      nextBtn = document.createElement('button');
+      nextBtn.id = 'nextSongBtn';
+      nextBtn.textContent = 'Next Song ⟩';
+      nextBtn.style.position = 'fixed';
+      nextBtn.style.top = '20px';
+      nextBtn.style.right = '40px';
+      nextBtn.style.zIndex = 1000;
+      nextBtn.style.fontSize = '24px';
+      
+      nextBtn.onclick = () => {
+        if (songIdx < songs.length - 1) {
+          songIdx++;
+          sectionIdx = 0;
+          keyIdx = 0;
+          waitingForSpace = true;
+          challengeMode = document.getElementById('challengeCheckbox').checked;
+          speechEnabled = document.getElementById('speechCheckbox').checked;
+          restrictedAttemptsMode = document.getElementById('restrictedAttemptsCheckbox').checked;
+          
+          // Reset attempts counter for new song in restricted attempts mode
+          if (restrictedAttemptsMode) {
+            maxAttempts = calculateMaxAttempts(songs[songIdx], sectionIdx);
+            attemptsLeft = maxAttempts;
+            updateAttemptsBanner();
+            // Update shared state so free-style-game knows about attempts
+            updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+          } else {
+            // Make sure shared state is updated even when not in restricted mode
+            updateAttemptsState(false, 0);
+          }
+          
+          setConfigToHash();
+          render();
+          window.removeEventListener('keydown', handleAnyKey);
+          window.removeEventListener('keydown', handleSpace);
+          window.addEventListener('keydown', handleSpace);
+        }
+      };
+      
+      document.body.appendChild(nextBtn);
+    }
 
-    nextBtn = document.createElement('button');
-    nextBtn.id = 'nextSongBtn';
-    nextBtn.textContent = 'Next Song ⟩';
-    nextBtn.style.position = 'fixed';
-    nextBtn.style.top = '20px';
-    nextBtn.style.right = '40px';
-    nextBtn.style.zIndex = 1000;
-    nextBtn.style.fontSize = '24px';
-
-    challengeBox = document.createElement('input');
-    challengeBox.type = 'checkbox';
-    challengeBox.id = 'challengeCheckbox';
-    challengeBox.style.position = 'fixed';
-    challengeBox.style.top = '70px';
-    challengeBox.style.right = '40px';
-    challengeBox.style.zIndex = 1000;
-    challengeBox.style.transform = 'scale(1.5)';
+    if (!challengeBox) {
+      challengeBox = document.createElement('input');
+      challengeBox.type = 'checkbox';
+      challengeBox.id = 'challengeCheckbox';
+      challengeBox.style.position = 'fixed';
+      challengeBox.style.top = '70px';
+      challengeBox.style.right = '40px';
+      challengeBox.style.zIndex = 1000;
+      challengeBox.style.transform = 'scale(1.5)';
+      
+      challengeBox.onchange = () => {
+        challengeMode = challengeBox.checked;
+        setConfigToHash();
+        render();
+      };
+      
+      document.body.appendChild(challengeBox);
+    }
     challengeBox.checked = challengeMode;
 
-    challengeLabel = document.createElement('label');
-    challengeLabel.id = 'challengeLabel';
-    challengeLabel.htmlFor = 'challengeCheckbox';
-    challengeLabel.textContent = 'Challenge';
-    challengeLabel.style.position = 'fixed';
-    challengeLabel.style.top = '70px';
-    challengeLabel.style.right = '80px';
-    challengeLabel.style.zIndex = 1000;
-    challengeLabel.style.fontSize = '24px';
+    if (!challengeLabel) {
+      challengeLabel = document.createElement('label');
+      challengeLabel.id = 'challengeLabel';
+      challengeLabel.htmlFor = 'challengeCheckbox';
+      challengeLabel.textContent = 'Challenge';
+      challengeLabel.style.position = 'fixed';
+      challengeLabel.style.top = '70px';
+      challengeLabel.style.right = '80px';
+      challengeLabel.style.zIndex = 1000;
+      challengeLabel.style.fontSize = '24px';
+      document.body.appendChild(challengeLabel);
+    }
 
-    speechBox = document.createElement('input');
-    speechBox.type = 'checkbox';
-    speechBox.id = 'speechCheckbox';
-    speechBox.style.position = 'fixed';
-    speechBox.style.top = '110px';
-    speechBox.style.right = '40px';
-    speechBox.style.zIndex = 1000;
-    speechBox.style.transform = 'scale(1.5)';
+    if (!speechBox) {
+      speechBox = document.createElement('input');
+      speechBox.type = 'checkbox';
+      speechBox.id = 'speechCheckbox';
+      speechBox.style.position = 'fixed';
+      speechBox.style.top = '110px';
+      speechBox.style.right = '40px';
+      speechBox.style.zIndex = 1000;
+      speechBox.style.transform = 'scale(1.5)';
+      document.body.appendChild(speechBox);
+    }
     speechBox.checked = speechEnabled;
 
-    speechLabel = document.createElement('label');
-    speechLabel.id = 'speechLabel';
-    speechLabel.htmlFor = 'speechCheckbox';
-    speechLabel.textContent = 'Speech';
-    speechLabel.style.position = 'fixed';
-    speechLabel.style.top = '110px';
-    speechLabel.style.right = '80px';
-    speechLabel.style.zIndex = 1000;
-    speechLabel.style.fontSize = '24px';
+    if (!speechLabel) {
+      speechLabel = document.createElement('label');
+      speechLabel.id = 'speechLabel';
+      speechLabel.htmlFor = 'speechCheckbox';
+      speechLabel.textContent = 'Speech';
+      speechLabel.style.position = 'fixed';
+      speechLabel.style.top = '110px';
+      speechLabel.style.right = '80px';
+      speechLabel.style.zIndex = 1000;
+      speechLabel.style.fontSize = '24px';
+      document.body.appendChild(speechLabel);
+    }
 
-    speedSlider = document.createElement('input');
-    speedSlider.type = 'range';
-    speedSlider.id = 'speedSlider';
-    speedSlider.min = '0.3';
-    speedSlider.max = '2.5';
-    speedSlider.step = '0.1';
+    if (!restrictedAttemptsBox) {
+      restrictedAttemptsBox = document.createElement('input');
+      restrictedAttemptsBox.type = 'checkbox';
+      restrictedAttemptsBox.id = 'restrictedAttemptsCheckbox';
+      restrictedAttemptsBox.style.position = 'fixed';
+      restrictedAttemptsBox.style.top = '150px';
+      restrictedAttemptsBox.style.right = '40px';
+      restrictedAttemptsBox.style.zIndex = 1000;
+      restrictedAttemptsBox.style.transform = 'scale(1.5)';
+      document.body.appendChild(restrictedAttemptsBox);
+    }
+    restrictedAttemptsBox.checked = restrictedAttemptsMode;
+
+    if (!restrictedAttemptsLabel) {
+      restrictedAttemptsLabel = document.createElement('label');
+      restrictedAttemptsLabel.id = 'restrictedAttemptsLabel';
+      restrictedAttemptsLabel.htmlFor = 'restrictedAttemptsCheckbox';
+      restrictedAttemptsLabel.textContent = 'Limit Attempts';
+      restrictedAttemptsLabel.style.position = 'fixed';
+      restrictedAttemptsLabel.style.top = '150px';
+      restrictedAttemptsLabel.style.right = '80px';
+      restrictedAttemptsLabel.style.zIndex = 1000;
+      restrictedAttemptsLabel.style.fontSize = '24px';
+      document.body.appendChild(restrictedAttemptsLabel);
+    }
+
+    if (!speedSlider) {
+      speedSlider = document.createElement('input');
+      speedSlider.type = 'range';
+      speedSlider.id = 'speedSlider';
+      speedSlider.min = '0.3';
+      speedSlider.max = '2.5';
+      speedSlider.step = '0.1';
+      speedSlider.style.position = 'fixed';
+      speedSlider.style.top = '190px';
+      speedSlider.style.right = '40px';
+      speedSlider.style.zIndex = 1000;
+      speedSlider.style.width = '180px';
+      document.body.appendChild(speedSlider);
+    }
     speedSlider.value = noteSpeedRatio;
-    speedSlider.style.position = 'fixed';
-    speedSlider.style.top = '160px';
-    speedSlider.style.right = '40px';
-    speedSlider.style.zIndex = 1000;
-    speedSlider.style.width = '180px';
 
-    speedLabel = document.createElement('label');
-    speedLabel.id = 'speedLabel';
-    speedLabel.htmlFor = 'speedSlider';
+    if (!speedLabel) {
+      speedLabel = document.createElement('label');
+      speedLabel.id = 'speedLabel';
+      speedLabel.htmlFor = 'speedSlider';
+      speedLabel.style.position = 'fixed';
+      speedLabel.style.top = '190px';
+      speedLabel.style.right = '230px';
+      speedLabel.style.zIndex = 1000;
+      speedLabel.style.fontSize = '24px';
+      document.body.appendChild(speedLabel);
+    }
     speedLabel.textContent = `Speed: ${noteSpeedRatio.toFixed(1)}x`;
-    speedLabel.style.position = 'fixed';
-    speedLabel.style.top = '160px';
-    speedLabel.style.right = '230px';
-    speedLabel.style.zIndex = 1000;
-    speedLabel.style.fontSize = '24px';
 
     prevBtn.onclick = () => {
       if (songIdx > 0) {
@@ -305,6 +530,17 @@ function runGame() {
         waitingForSpace = true;
         challengeMode = challengeBox.checked;
         speechEnabled = speechBox.checked;
+        restrictedAttemptsMode = restrictedAttemptsBox.checked;
+        
+        // Reset attempts counter for new song in restricted attempts mode
+        if (restrictedAttemptsMode) {
+          maxAttempts = calculateMaxAttempts(songs[songIdx], sectionIdx);
+          attemptsLeft = maxAttempts;
+          updateAttemptsBanner();
+          // Update shared state so free-style-game knows about attempts
+          updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+        }
+        
         setConfigToHash();
         render();
         window.removeEventListener('keydown', handleAnyKey);
@@ -320,6 +556,17 @@ function runGame() {
         waitingForSpace = true;
         challengeMode = challengeBox.checked;
         speechEnabled = speechBox.checked;
+        restrictedAttemptsMode = restrictedAttemptsBox.checked;
+        
+        // Reset attempts counter for new song in restricted attempts mode
+        if (restrictedAttemptsMode) {
+          maxAttempts = calculateMaxAttempts(songs[songIdx], sectionIdx);
+          attemptsLeft = maxAttempts;
+          updateAttemptsBanner();
+          // Update shared state so free-style-game knows about attempts
+          updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+        }
+        
         setConfigToHash();
         render();
         window.removeEventListener('keydown', handleAnyKey);
@@ -337,6 +584,18 @@ function runGame() {
       setConfigToHash();
       render();
     };
+    restrictedAttemptsBox.onchange = () => {
+      restrictedAttemptsMode = restrictedAttemptsBox.checked;
+      if (restrictedAttemptsMode) {
+        // Initialize attempts for current song section
+        maxAttempts = calculateMaxAttempts(songs[songIdx], sectionIdx);
+        attemptsLeft = maxAttempts;
+      }
+      // Update shared state so free-style-game knows about attempts
+      updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+      setConfigToHash();
+      render();
+    };
     speedSlider.oninput = () => {
       noteSpeedRatio = parseFloat(speedSlider.value);
       speedLabel.textContent = `Speed: ${noteSpeedRatio.toFixed(1)}x`;
@@ -349,12 +608,15 @@ function runGame() {
     document.body.appendChild(challengeLabel);
     document.body.appendChild(speechBox);
     document.body.appendChild(speechLabel);
+    document.body.appendChild(restrictedAttemptsBox);
+    document.body.appendChild(restrictedAttemptsLabel);
     document.body.appendChild(speedSlider);
     document.body.appendChild(speedLabel);
   }
 
   function render() {
     addNavButtons();
+    updateAttemptsBanner();
     if (waitingForSpace) {
       renderPressSpace();
       return;
@@ -544,6 +806,19 @@ function runGame() {
           render();
           return;
         }
+        
+        // Reset attempts counter for new song in restricted attempts mode
+        if (restrictedAttemptsMode) {
+          maxAttempts = calculateMaxAttempts(songs[songIdx], sectionIdx);
+          attemptsLeft = maxAttempts;
+          updateAttemptsBanner();
+          // Update shared state so free-style-game knows about attempts
+          updateAttemptsState(restrictedAttemptsMode, attemptsLeft);
+        } else {
+          // Make sure shared state is updated even when not in restricted mode
+          updateAttemptsState(false, 0);
+        }
+        
         waitingForSpace = true;
         render();
         window.addEventListener('keydown', handleSpace);
@@ -575,6 +850,7 @@ function runGame() {
 (function initFromHash() {
   const params = getConfigFromHash();
   challengeMode = params.challenge === '1';
+  restrictedAttemptsMode = params.restricted_attempts === '1';
   speechEnabled = params.speech !== '0'; // Default to true, false only if explicitly set to 0
   if (params.songIdx && !isNaN(params.songIdx)) {
     songIdx = Math.max(0, Math.min(songs.length - 1, parseInt(params.songIdx, 10)));
@@ -582,6 +858,9 @@ function runGame() {
   if (params.noteSpeedRatio && !isNaN(params.noteSpeedRatio)) {
     noteSpeedRatio = Math.max(0.4, Math.min(2.5, parseFloat(params.noteSpeedRatio)));
   }
+  
+  // Initialize shared state
+  updateAttemptsState(restrictedAttemptsMode, restrictedAttemptsMode ? 999 : 0);
 })();
 
 runGame();

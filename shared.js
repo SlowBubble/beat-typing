@@ -14,6 +14,21 @@ const chordMap = {
   '0': [43], // High Floor Tom
 };
 
+// Shared state for restricted attempts mode
+let isRestrictedAttemptsActive = false;
+let hasAttemptsLeft = true;
+
+// Function to check if sound should be allowed
+function shouldAllowSound() {
+  return !isRestrictedAttemptsActive || hasAttemptsLeft;
+}
+
+// Function to update attempts state (called from game.js)
+function updateAttemptsState(restrictedMode, attemptsRemaining) {
+  isRestrictedAttemptsActive = restrictedMode;
+  hasAttemptsLeft = attemptsRemaining > 0;
+}
+
 // MIDI note number to percussion instrument name mapping
 const percussionNames = {
   36: 'Bass Drum 1',

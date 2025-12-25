@@ -47,6 +47,11 @@ window.addEventListener('keydown', function(e) {
   }
 	const key = e.key;
 	if (chordMap[key]) {
+		// Check if sound should be allowed (for restricted attempts mode)
+		if (!shouldAllowSound()) {
+			return; // Don't play sound if no attempts left
+		}
+		
 		// Check if it's a number 0-9 (drum beat)
 		if (key >= '0' && key <= '9') {
 			const drumNote = chordMap[key][0];
@@ -59,7 +64,13 @@ window.addEventListener('keydown', function(e) {
 			}
 		}
 	} else if (!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
-		e.preventDefault();
+		// Don't prevent default for keys that might be used by game logic
+		// Allow letters, space, enter, and other game control keys to pass through
+		const allowedKeys = ['Space', 'Enter', 'Escape', 'Tab'];
+		const isLetter = key.length === 1 && key.match(/[a-zA-Z]/);
+		if (!allowedKeys.includes(key) && !isLetter) {
+			e.preventDefault();
+		}
 	}
 });
 
